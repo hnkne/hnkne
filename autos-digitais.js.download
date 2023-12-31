@@ -1,0 +1,412 @@
+(function(window, $){
+	'use strict';
+	
+	$.expr[":"].Contains = $.expr.createPseudo(function(arg) {
+		return function( elem ) {
+			return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
+		};
+	});
+	
+	/**
+	 * Classe de controles do painel
+	 */
+	function Painel(){
+		var self = this;
+		self.$btnProximo = $('.btn-proximo');
+		self.$btnAnterior = $('.btn-anterior');
+		self.todosDocumentos;
+		self.documentoAtual = null;
+		
+		/**
+		 * Avanca para o proximo documento
+		 * @param {event} e
+		 */
+		this.avancarDocumento = function(e){
+			e.preventDefault();
+			self.selecionaDocumento();
+		};
+		
+		/**
+		 * Retorna para o documento anterior
+		 * @param {event} e
+		 */
+		this.voltarDocumento = function(e){
+			e.preventDefault();
+			self.selecionaDocumento(-1);
+		};
+		
+		/**
+		 * Marca o movimento e o documento da timeline como selecionado 
+		 * de acordo com o passo (1: Proximo | -1: Anterior),
+		 * podendo ser o primeiro ou o ultimo caso haja um documento selecionado
+		 *  
+		 * @param {number} passo
+		 */
+		this.selecionaDocumento = function(passo){
+			/** @const {number} */
+			const PASSO = passo || 1; 
+			
+			if(!self.existeDocumentos()){
+				return false;
+			}
+			
+			if(self.existeDocumentoSelecionado()){
+				self.selecionaDocumentoPadrao(PASSO);
+			}else{
+				var novoIndice = self.todosDocumentos.index(self.documentoAtual) + PASSO;
+				var selecionado = self.todosDocumentos[novoIndice];
+				$(selecionado).addClass('active');
+			}
+			
+			self.selecionarBalaoMovimento();
+//			$('.anexos > a.active').click();
+		};
+		
+		/**
+		 * Verifica se existe algum documento para selecao
+		 * @returns {boolean}
+		 */
+		this.existeDocumentos = function(){
+			self.todosDocumentos = $('.media-body > .anexos > a');
+			self.documentoAtual = $('.media-body > .anexos > a.active');
+			self.documentoAtual.removeClass('active');
+			
+			if(self.todosDocumentos.lenght == 0){
+				self.$btnProximo.addClass('disabled').unbind();
+				self.$btnAnterior.addClass('disabled').unbind();
+				
+				throw "Nao existe documentos para selecionar";
+				return false;
+			}
+			
+			return true;
+		};
+		
+		/**
+		 * Verifica se existe algum documento selecionado
+		 * @returns {boolean}
+		 */
+		this.existeDocumentoSelecionado = function(){
+			return self.documentoAtual.length < 1;
+		};
+		
+		/**
+		 * Seleciona o primeiro ou o ultimo documento da timeline 
+		 * de acordo com o passo (1: Proximo | -1: Anterior)
+		 * 
+		 * @param {number} passo 
+		 */
+		this.selecionaDocumentoPadrao = function(passo){
+			if(passo > 0){
+				self.selecionarPrimeiroDocumento();
+			}
+			self.selecionarUltimoDocumento();
+		};
+		
+		/**
+		 * Seleciona o primeiro documento da timeline
+		 */
+		this.selecionarPrimeiroDocumento = function(){
+			$('.media-body > .anexos > a:first-child').first().addClass('active');
+		};
+		
+		/**
+		 * Seleciona o ultimo documento da timeline
+		 */
+		this.selecionarUltimoDocumento = function(){
+			$('.media-body > .anexos > a:last-child').last().addClass('active');
+		};
+		
+		/**
+		 * Seleciona o balao de movimento com documento atual na timeline
+		 */
+		this.selecionarBalaoMovimento = function(){
+			var $balaoMovimento = $('.media-body > .anexos > a.active').parents('.media');
+			
+			if(!$balaoMovimento.hasClass('active')){
+				$('.media.active').removeClass('active');
+				$balaoMovimento.addClass('active');
+			}
+		};
+		
+		/**
+		 * Alterna entre as abas do menu mobile
+		 * @param {string} aba 
+		 * @param {object} botao 
+		 */
+		this.exibirAbaMobile = function(aba, botao){
+			$(botao).siblings().removeClass('active');
+			$(aba).siblings('.mobile-open').removeClass('mobile-open').addClass('mobile-close');
+			
+			$(botao).addClass('active');
+			$(aba).toggleClass('mobile-close mobile-open');
+		};
+		
+		/**
+		 * Define todas funcoes de botoes do painel
+		 */
+		this.atribuirControles = function(){
+			
+			//Destaque de movimento selecionado
+			$('.timeline .media:has(.anexos)').on('click', function(){
+				$('.timeline .media.active').removeClass('active');
+				$(this).addClass('active');
+			});
+			
+			//Exibe outros documentos abertos
+			$('.btn-ultimos, .favoritos .btn-fechar').on('click', function(e){
+				e.preventDefault();
+				$('.favoritos').toggleClass('open');
+				$('.detalhe-documento').toggleClass('panel-open');
+			});
+			
+			$('.btn-timeline, .timeline .btn-fechar').on('click', function(e){
+				e.preventDefault();
+				$('.timeline').toggleClass('open');
+				$('.detalhe-documento').toggleClass('timeline-open');
+			});
+			
+			//Marca documento clicado
+			$('.media-body > .anexos > a').on('click', function(){
+				$('.media-body > .anexos > a.active').removeClass('active');
+				$(this).addClass('active');
+			});
+			
+			// Troca o estilo do icone de favorito ao clicar
+			$('.favorito').click(function(){
+				$(this).find('i').toggleClass('fa-star-o fa-star');
+			});
+			
+			//Abas do menu mobile
+			$('.menu-mobile a').on('click', function(e){
+				e.preventDefault();
+				e.stopPropagation();
+				var aba = $(this).attr('href');
+				self.exibirAbaMobile(aba, this);
+			});
+			
+			//Exibe o documento ao selecionar na timeline (Mobile)
+			$('.timeline.mobile-open .anexos a, .favoritos.mobile-open a.link-favorito').on('click', function(e){
+				e.preventDefault();
+				self.exibirAbaMobile('#detalheDocumento', $('a[href="#detalheDocumento"]'));
+			});
+			
+		};
+		
+		/**
+		 * @constructor
+		 * Dispara a construcao dos controles do painel;
+		 */
+		this._init = function(){
+			//Bloqueia botoes (anterior e proximo) se nao existir documentos
+			self.existeDocumentos();
+			
+			self.atribuirControles();
+		};
+		
+		return self._init();
+	};
+	
+	
+	/**
+	 * Classe de paginacao da timeline
+	 */
+	function Timeline(){
+		var self = this;
+		/** @define {boolean} */
+		self.carregando = false;
+		self.$resultado = $('.resultado');
+		self.$timeline = $('.eventos-timeline');
+		self.$preloader = $('.svg-preloader');
+		
+		/**
+		 * Carrega as novas paginas de acordo com os filtros pre-definidos 
+		 */
+		this.paginacaoInfinita = function(){
+		    var altura = self.$timeline.prop('scrollHeight');
+		    var rolagem = self.$timeline.scrollTop() + self.$timeline.height();
+		    var limite = altura - 10; //disparar faltando 10px para o final
+
+		    if(rolagem >= limite && !self.carregando){
+		    	self.exibePreloader();
+		    	self.carregando = true;	
+		    	novaPagina();
+		    }
+		};
+		
+		/**
+		 * Exibe pre-loader por alguns segundos
+		 * @param {number} tempo 
+		 */
+		this.exibePreloader = function(tempo){
+			tempo = tempo || 5000;
+			self.$preloader.removeClass('hidden');
+			
+			setTimeout(function(){
+				self.$preloader.addClass('hidden');
+			}, tempo);
+		};
+		
+		/**
+		 *	Adiciona as novas paginas na timeline
+		 */
+		this.adicionaNovaPagina = function(){
+			self.$timeline.append(self.$resultado.html());
+			self.$resultado.empty();
+			self.filtrar();
+			self.$preloader.addClass('hidden');
+			self.carregando = false;
+		};
+		
+		/**
+		 * @constructor
+		 * Carrega proxima pagina ao rolar timeline e/ou alterar tamanho da tela
+		 * Atribui eventos de navegacao de documentos
+		 * Atribui eventos de pesquisa
+		 * Atribui eventos de filtro
+		 */
+		this._init = function(){
+			//Paginacao
+			bindPaginacaoInfinita();
+			new Painel();
+		};
+		
+		return self._init();
+	};
+	
+	$(document).ready(function(){
+		window.Timeline = new Timeline();
+		
+		$('.tip, .tip-bottom, .tip-left, .tip-right').on('click', function(){
+			$(this).tooltip('toggle');
+		});
+		
+		//Placeholder (Sugestao: inserir isso global)
+		$('.placeholder').each(function(){
+			var placeholder = this.value;
+			$(this).attr('placeholder', placeholder).val('');
+		});
+		
+		//Evita que o dropdown feche ao selecionar opcao do select
+		$('body').on('click', '.dropdown-menu', function(e) {
+	        e.stopPropagation();
+	    });
+	});
+})(window, jQuery_21);
+
+var scrollPosition;
+var paginaAtual;
+var totalPaginas;
+
+function saveScrollPosition() {
+    scrollPosition = jQuery_21('.eventos-timeline').scrollTop();
+}
+
+function setScrollPosition() {
+	jQuery_21('.eventos-timeline').scrollTop(scrollPosition);
+}
+
+function isUltimaPagina() {
+	return (parseInt(paginaAtual) >= parseInt(totalPaginas));
+}
+
+function limparTimeline() {
+	jQuery_21('.eventos-timeline').html('');
+}
+
+function exibePreloader(tempo){
+	
+	var preloader = jQuery_21('.svg-preloader'); 
+	tempo = tempo || 5000;
+	preloader.removeClass('hidden');
+	
+	setTimeout(function(){
+		preloader.addClass('hidden');
+	}, tempo);
+};
+
+function bindPaginacaoInfinita(iniciar) {
+	paginaAtual = jQuery_21('#paginaAtual').val() || 0;
+	totalPaginas = jQuery_21('#totalPaginas').val() || 0;
+	iniciar = iniciar || false;
+	
+	if(!isUltimaPagina()) {
+		jQuery_21('.eventos-timeline').on('scroll resize', habilitaPaginacaoInfinita);
+	}
+	else{
+		jQuery_21('.eventos-timeline').on('scroll resize', carregaDataTimeLine);
+	}
+	if(iniciar) {
+		scrollPosition = 0;
+	}
+	setScrollPosition();
+};
+
+function habilitaPaginacaoInfinita(){
+	saveScrollPosition();
+
+	var altura = document.querySelector(".eventos-timeline").scrollHeight;
+    var rolagem = document.querySelector(".eventos-timeline").scrollTop + document.querySelector(".eventos-timeline").clientHeight;
+    var limite = altura - 10; //disparar faltando 10px para o final
+
+    if(!isUltimaPagina() && rolagem >= limite){
+		jQuery_21('.eventos-timeline').off('scroll resize');
+    	exibePreloader();
+    	novaPagina();
+    }
+	carregaDataTimeLine();
+
+};
+
+function carregaDataTimeLine(){
+	if (!jQuery_21(".offset-top")[0]) {
+		document.querySelector(".div-data-rolagem").style.display='block';
+	} else {
+		if (jQuery_21(".eventos-timeline").scrollTop() > 110) {
+			document.querySelector(".div-data-rolagem").style.display='block';
+		} else {
+			document.querySelector(".div-data-rolagem").style.display='none';
+		}
+	}
+	
+	var pos = jQuery_21(".div-data-rolagem span").offset();
+	var items = jQuery_21(".data-interna");
+	for(var i =0 ; i < items.length;i++){
+		if(i == items.length -1){
+			if(pos.top >= jQuery_21(items[i]).offset().top){
+				jQuery_21(".div-data-rolagem span").html(jQuery_21(items[i]).html());
+				return;
+			}
+		}
+		else{
+			if(pos.top >= jQuery_21(items[i]).offset().top && pos.top <= jQuery_21(items[i+1]).offset().top ){
+				jQuery_21(".div-data-rolagem span").html(jQuery_21(items[i]).html());
+				return;
+			}
+		}
+
+	}
+}
+
+function excluirAlerta(item){
+	document.querySelector("#"+item).style.display = 'none';
+	var qtd = parseInt(document.querySelector("#qtdAlertas").innerHTML)-1;
+	if(qtd > 0){
+		document.querySelector("#qtdAlertas").innerHTML = qtd;
+	}
+	else{
+		excluirTodosAlertas();
+	}
+};
+
+function excluirTodosAlertas() {
+	document.querySelector(".icone-alerta").style.display = 'none';	
+	document.querySelector(".icone-alerta").className='';
+}
+
+function excluirTodasPendencias() {
+	document.querySelector(".icone-pendencia").style.display = 'none';	
+	document.querySelector(".icone-pendencia").className='';
+}
+
+jQuery_21(window).trigger("scroll");

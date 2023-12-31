@@ -1,0 +1,69 @@
+@font-face {
+  font-family: 'icomoon';
+  src:  url('fonts/icomoon.eot?4zl1ci');
+  src:  url('fonts/icomoon.eot?4zl1ci#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?4zl1ci') format('truetype'),
+    url('fonts/icomoon.woff?4zl1ci') format('woff'),
+    url('fonts/icomoon.svg?4zl1ci#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-abusoInfantil:before {
+  content: "\e900";
+}
+.icon-defensoria:before {
+  content: "\e901";
+}
+.icon-doencaGrave:before {
+  content: "\e902";
+}
+.icon-habilitacaoAutos:before {
+  content: "\e903";
+}
+.icon-idoso60:before {
+  content: "\e904";
+}
+.icon-idoso80:before {
+  content: "\e905";
+}
+.icon-juntada:before {
+  content: "\e906";
+}
+.icon-menorAutos:before {
+  content: "\e907";
+}
+.icon-ministerioPublico:before {
+  content: "\e908";
+}
+.icon-pedidoAdocao:before {
+  content: "\e909";
+}
+.icon-pedidoProtecao:before {
+  content: "\e90a";
+}
+.icon-pne:before {
+  content: "\e90c";
+}
+.icon-processoAssociado:before {
+  content: "\e90d";
+}
+.icon-reuPreso:before {
+  content: "\e90e";
+}
